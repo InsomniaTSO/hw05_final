@@ -18,7 +18,7 @@ def index(request: HttpRequest) -> HttpResponse:
     """Рендер главной страницы."""
     template = 'posts/index.html'
     text: str = 'Последние обновления на сайте.'
-    post_list = Post.objects.all()
+    post_list = Post.objects.select_related('group').all()
     paginator = Paginator(post_list, settings.POSTS_PER_PAGE)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -60,10 +60,7 @@ def profile(request: HttpRequest, username: str) -> HttpResponse:
         following = False
     else:
         user = request.user
-        if Follow.objects.filter(user=user, author=author).exists():
-            following = True
-        else:
-            following = False
+        following = Follow.objects.filter(user=user, author=author).exists()
     context = {
         'page_obj': page_obj,
         'text': text,
@@ -153,10 +150,7 @@ def follow_index(request: HttpRequest) -> HttpResponse:
     template = 'posts/follow.html'
     text: str = f'Подписки пользователя {request.user}'
     user = request.user
-    post_list = User.objects.none()
-    for i in Follow.objects.filter(user=user):
-        author = i.author
-        post_list |= author.posts.all()
+    post_list = Post.objects.filter(author__following__user=user).all()
     paginator = Paginator(post_list, settings.POSTS_PER_PAGE)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -171,13 +165,9 @@ def profile_follow(request: HttpRequest, username: str) -> HttpResponse:
     '''Добавление подписки.'''
     user = request.user
     author = get_object_or_404(User, username=username)
-    if request.user == author or Follow.objects.filter(
-            user=user, author=author).exists():
-        return redirect('posts:follow_index')
-    else:
-        follow = Follow.objects.create(user=user, author=author)
-        follow.save()
-        return redirect('posts:follow_index')
+    if request.user != author:
+        Follow.objects.get_or_create(user=user, author=author)
+    return redirect('posts:follow_index')
 
 
 @login_required

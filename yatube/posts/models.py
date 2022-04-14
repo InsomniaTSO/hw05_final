@@ -47,6 +47,10 @@ class Group(models.Model):
     description = models.TextField('Описание группы',
                                    help_text='Дайте короткое описание группы')
 
+    class Meta:
+        verbose_name = 'Группа'
+        verbose_name_plural = 'Группы'
+
     def __str__(self):
         return self.title
 
@@ -66,6 +70,10 @@ class Comment(CreatedModel):
     text = models.TextField('Текст комментария',
                             help_text='Напишите что-нибудь')
 
+    class Meta:
+        verbose_name = 'Комментарий'
+        verbose_name_plural = 'Комментарии'
+
 
 class Follow(models.Model):
     user = models.ForeignKey(
@@ -80,3 +88,11 @@ class Follow(models.Model):
         related_name='following',
         verbose_name='Автор'
     )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'author'],
+                                    name='unique follow')
+        ]
+        verbose_name = 'Подписка'
+        verbose_name_plural = 'Подписки'
