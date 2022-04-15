@@ -164,6 +164,43 @@ class PostsPagesTests(TestCase):
                 form_field = response.context.get('form').fields.get(value)
                 self.assertIsInstance(form_field, expected)
 
+    def test_follow_index_page_show_correct_context(self):
+        """Шаблон follow_index сформирован с правильным контекстом."""
+        Follow.objects.create(
+            user=self.user,
+            author=self.post.author)
+        response = self.authorized_client.get(reverse('posts:follow_index'))
+        text = response.context['text']
+        first_object = response.context['page_obj'][0]
+        post_text_0 = first_object.text
+        post_author_0 = first_object.author.username
+        post_image_0 = first_object.image.name
+        self.assertEqual(text, 'Подписки пользователя HasNoName')
+        self.assertEqual(post_text_0, 'Тестовый текст')
+        self.assertEqual(post_author_0, 'Author')
+        self.assertEqual(post_image_0, 'posts/small.gif')
+
+    def test_profile_follow_create(self):
+        """profile_follow создает подписку."""
+        self.authorized_client.get(
+            reverse('posts:profile_follow', kwargs={'username': 'Author'})
+        )
+        self.assertTrue(Follow.objects.filter(
+            user=self.user, author=self.post.author).exists()
+        )
+
+    def test_profile_unfollow_create(self):
+        """profile_unfollow удаляет подписку."""
+        Follow.objects.create(
+            user=self.user,
+            author=self.post.author)
+        self.authorized_client.get(
+            reverse('posts:profile_unfollow', kwargs={'username': 'Author'})
+        )
+        self.assertFalse(Follow.objects.filter(
+            user=self.user, author=self.post.author).exists()
+        )
+
 
 class PostCreateTest(TestCase):
 

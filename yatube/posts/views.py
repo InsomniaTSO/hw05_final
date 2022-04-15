@@ -150,7 +150,7 @@ def follow_index(request: HttpRequest) -> HttpResponse:
     template = 'posts/follow.html'
     text: str = f'Подписки пользователя {request.user}'
     user = request.user
-    post_list = Post.objects.filter(author__following__user=user).all()
+    post_list = Post.objects.filter(author__following__user=user)
     paginator = Paginator(post_list, settings.POSTS_PER_PAGE)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
